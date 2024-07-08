@@ -6,7 +6,7 @@ const encryption = require("../utils/encryption");
 const jwt = require("../utils/jwt");
 const helpers = require("../utils/helpers");
 const organisation = require("../database/models/organisation");
-const User = require("../database/models/user");
+const { User } = require("../database/models/index.js");
 
 AuthRouter.post("/register", async (req, res) => {
 	try {
@@ -63,19 +63,19 @@ AuthRouter.post("/register", async (req, res) => {
 		if (errors.length > 0) {
 			return res.status(400).json({ errors: errors });
 		}
-		const hashedPwd = encryption.generateHashedPassword(password);
-    console.log(User,"mine")
-		const userdata = await User.create({
-			// firstName,
-			// lastName,
-			// email,
-			// password: hashedPwd,
-			// phone,
+		const hashedPwd = await encryption.generateHashedPassword(password);
+		console.log(req.body, "mine");
+		let userdata = await User.create({
+			firstName,
+			lastName,
+			email,
+			password: hashedPwd,
+			phone,
 		});
-
-		const org = await organisation.create({
-			name: `${firstName}'s Organisation`,
-		});
+		console.log(userdata, "userdata ");
+		// const org = await organisation.create({
+		// 	name: `${firstName}'s Organisation`,
+		// });
 
 		// remove user password
 		userdata = helpers.extractPassword(userdata);

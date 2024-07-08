@@ -1,8 +1,8 @@
 const dotenv = require("dotenv");
+dotenv.config();
 const app = require("./index");
 const { dB } = require("./src/database/authDatabase");
 
-dotenv.config();
 
 const PORT = process.env.PORT || 3009;
 dB.auth();

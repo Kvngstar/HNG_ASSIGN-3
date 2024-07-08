@@ -9,8 +9,6 @@ module.exports = (sequelize, DataTypes) => {
 				foreignKey: "userId",
 			});
 		}
-
-		
 	}
 
 	User.init(
@@ -19,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
 				type: DataTypes.STRING,
 				defaultValue: DataTypes.UUIDV4,
 				unique: true,
+        primaryKey: true,
 			},
 			firstName: {
 				type: DataTypes.STRING,
