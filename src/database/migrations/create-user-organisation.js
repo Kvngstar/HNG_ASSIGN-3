@@ -12,7 +12,7 @@ module.exports = {
 				},
 				allowNull: false,
 			},
-			organisationId: {
+			orgId: {
 				type: Sequelize.UUID,
 				references: {
 					model: "organisation",

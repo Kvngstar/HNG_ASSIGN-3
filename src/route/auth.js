@@ -2,11 +2,17 @@ const express = require("express");
 const AuthRouter = express.Router();
 const validator = require("validator");
 const encryption = require("../utils/encryption");
+const _ = require("lodash");
+const bcrypt = require("bcrypt");
 
 const jwt = require("../utils/jwt");
 const helpers = require("../utils/helpers");
-const organisation = require("../database/models/organisation");
-const { User } = require("../database/models/index.js");
+
+const {
+	User,
+	Organisation,
+	UserOrganisation,
+} = require("../database/models/index.js");
 
 AuthRouter.post("/register", async (req, res) => {
 	try {
@@ -64,29 +70,31 @@ AuthRouter.post("/register", async (req, res) => {
 			return res.status(400).json({ errors: errors });
 		}
 		const hashedPwd = await encryption.generateHashedPassword(password);
-		console.log(req.body, "mine");
-		let userdata = await User.create({
+
+		let user = await User.create({
 			firstName,
 			lastName,
 			email,
 			password: hashedPwd,
 			phone,
 		});
-		console.log(userdata, "userdata ");
-		// const org = await organisation.create({
-		// 	name: `${firstName}'s Organisation`,
-		// });
+		console.log(user.dataValues, "user.dataValues ");
 
+		const org = await Organisation.create({
+			name: `${firstName}'s Organisation`,
+		});
+
+		await user.addOrganisation(org);
 		// remove user password
-		userdata = helpers.extractPassword(userdata);
-
-		const accessToken = jwt.createToken(userdata);
+		const trimmedData = helpers.extractPassword(user.dataValues);
+		console.log(trimmedData, "trimmedData");
+		const accessToken = jwt.createToken(trimmedData);
 		return res.status(201).json({
 			status: "success",
 			message: "Registration successful",
 			data: {
 				accessToken,
-				user: userdata,
+				user: _.omit(trimmedData, ["updatedAt", "createdAt", "deletedAt"]),
 			},
 		});
 	} catch (error) {
@@ -123,14 +131,14 @@ AuthRouter.post("/login", async (req, res) => {
 
 	try {
 		// Find the user by email
-		const user = await User.findOne({ where: { email } });
+		let { dataValues } = await User.findOne({ where: { email } });
 
-		if (!user) {
+		if (!dataValues) {
 			return res.status(404).json({ error: "User not found" });
 		}
 
 		// Compare passwords
-		const passwordMatch = await bcrypt.compare(password, user.password);
+		const passwordMatch = await bcrypt.compare(password, dataValues.password);
 		if (!passwordMatch) {
 			return res.status(401).json({
 				status: "Bad request",
@@ -138,9 +146,9 @@ AuthRouter.post("/login", async (req, res) => {
 				statusCode: 401,
 			});
 		}
-		user = helpers.extractPassword(user);
+		dataValues = helpers.extractPassword(dataValues);
 
-		const accessToken = jwt.createToken(user);
+		const accessToken = jwt.createToken(dataValues);
 
 		// If login successful
 		res.status(200).json({
@@ -148,7 +156,7 @@ AuthRouter.post("/login", async (req, res) => {
 			message: "Login successful",
 			data: {
 				accessToken: accessToken,
-				user: user,
+				user: _.omit(dataValues, ["updatedAt", "createdAt", "deletedAt"]),
 			},
 		});
 	} catch (error) {
