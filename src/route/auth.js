@@ -78,7 +78,6 @@ AuthRouter.post("/register", async (req, res) => {
 			password: hashedPwd,
 			phone,
 		});
-		console.log(user.dataValues, "user.dataValues ");
 
 		const org = await Organisation.create({
 			name: `${firstName}'s Organisation`,
@@ -87,7 +86,7 @@ AuthRouter.post("/register", async (req, res) => {
 		await user.addOrganisation(org);
 		// remove user password
 		const trimmedData = helpers.extractPassword(user.dataValues);
-		console.log(trimmedData, "trimmedData");
+
 		const accessToken = jwt.createToken(trimmedData);
 		return res.status(201).json({
 			status: "success",
